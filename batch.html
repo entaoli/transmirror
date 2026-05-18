@@ -483,6 +483,18 @@ body {
 </div>
 
 <script>
+// ── 鉴权 ────────────────────────────────────────────────────
+const _TM_KEY = 'tm_token';
+
+function authFetch(url, opts = {}) {
+  const token = localStorage.getItem(_TM_KEY) || '';
+  const headers = Object.assign({}, opts.headers || {}, {'Authorization': 'Bearer ' + token});
+  return fetch(url, Object.assign({}, opts, {headers})).then(r => {
+    if (r.status === 401) { _showLogin(); return Promise.reject('unauthorized'); }
+    return r;
+  });
+}
+
 // ── 状态 ────────────────────────────────────────────────────
 let repo = 'help';
 let repoList = [];
@@ -511,7 +523,7 @@ function _setInputDir(dir) {
 
 // ── 初始化 ──────────────────────────────────────────────────
 async function init() {
-  const r = await fetch('/api/repos');
+  const r = await authFetch('/api/repos');
   repoList = await r.json();
 
   // 恢复上次选择
@@ -577,7 +589,7 @@ function setLang(id) {
 
 // ── 目录选择 ────────────────────────────────────────────────
 document.getElementById('btnPick').onclick = async () => {
-  const r = await fetch('/api/pick-folder');
+  const r = await authFetch('/api/pick-folder');
   const d = await r.json();
   if (!d.path) return;
   _setInputDir(d.path);
@@ -715,7 +727,8 @@ function startBatch() {
     lang,
   });
 
-  evtSource = new EventSource(`/api/batch-translate?${params}`);
+  const _token = localStorage.getItem(_TM_KEY) || '';
+  evtSource = new EventSource(`/api/batch-translate?${params}&token=${encodeURIComponent(_token)}`);
   evtSource.onmessage = (e) => {
     const msg = JSON.parse(e.data);
     handleEvent(msg);
@@ -823,7 +836,65 @@ function replaceLastLog({ type, icon, text, sub, keepLast = false }) {
   }
 }
 
-init();
+// 启动时验证身份
+(async () => {
+  const token = localStorage.getItem(_TM_KEY);
+  if (token) {
+    const r = await fetch('/api/auth/check', {headers: {'Authorization': 'Bearer ' + token}}).catch(() => null);
+    if (r && r.ok) { init(); return; }
+  }
+  const probe = await fetch('/api/auth/check').catch(() => null);
+  if (probe && probe.ok) { init(); return; }
+  _showLogin();
+})();
+</script>
+
+<!-- 登录 Overlay -->
+<div id="login-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(15,15,20,0.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:14px;padding:40px 36px;width:320px;box-shadow:0 24px 64px rgba(0,0,0,0.18);">
+    <div style="font-size:18px;font-weight:700;color:#111;margin-bottom:6px;">译境 · 批量翻译</div>
+    <div style="font-size:13px;color:#888;margin-bottom:28px;">请输入访问密码</div>
+    <input id="login-pwd" type="password" placeholder="访问密码"
+      style="width:100%;padding:10px 14px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box;margin-bottom:10px;font-family:inherit;"
+      onkeydown="if(event.key==='Enter')doLogin()">
+    <div id="login-err" style="display:none;color:#e53935;font-size:12px;margin-bottom:10px;"></div>
+    <button onclick="doLogin()"
+      style="width:100%;padding:10px;background:#2196f3;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">
+      进入
+    </button>
+  </div>
+</div>
+<script>
+function _showLogin() {
+  const el = document.getElementById('login-overlay');
+  el.style.display = 'flex';
+  setTimeout(() => document.getElementById('login-pwd').focus(), 80);
+}
+async function doLogin() {
+  const pwd = document.getElementById('login-pwd').value;
+  const errEl = document.getElementById('login-err');
+  errEl.style.display = 'none';
+  try {
+    const r = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({password: pwd}),
+    });
+    if (r.ok) {
+      const { token } = await r.json();
+      if (token) localStorage.setItem(_TM_KEY, token);
+      document.getElementById('login-overlay').style.display = 'none';
+      init();
+    } else {
+      errEl.textContent = '密码错误，请重试';
+      errEl.style.display = '';
+      document.getElementById('login-pwd').select();
+    }
+  } catch (e) {
+    errEl.textContent = '网络错误，请检查服务是否运行';
+    errEl.style.display = '';
+  }
+}
 </script>
 </body>
 </html>

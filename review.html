@@ -21,6 +21,92 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: #f8f8f9; }
 </style>
 </head>
 <body>
+
+<!-- 登录 Overlay -->
+<div id="login-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(15,15,20,0.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:14px;padding:40px 36px;width:320px;box-shadow:0 24px 64px rgba(0,0,0,0.18);">
+    <div style="font-size:18px;font-weight:700;color:#111;margin-bottom:6px;">译境 · TransMirror</div>
+    <div style="font-size:13px;color:#888;margin-bottom:28px;">请输入访问密码</div>
+    <input id="login-pwd" type="password" placeholder="访问密码"
+      style="width:100%;padding:10px 14px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box;margin-bottom:10px;font-family:inherit;"
+      onkeydown="if(event.key==='Enter')doLogin()">
+    <div id="login-err" style="display:none;color:#e53935;font-size:12px;margin-bottom:10px;"></div>
+    <button onclick="doLogin()"
+      style="width:100%;padding:10px;background:#2196f3;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">
+      进入
+    </button>
+  </div>
+</div>
+
+<script>
+const _TM_KEY = 'tm_token';
+
+function _showLogin() {
+  const el = document.getElementById('login-overlay');
+  el.style.display = 'flex';
+  setTimeout(() => document.getElementById('login-pwd').focus(), 80);
+}
+function _hideLogin() {
+  document.getElementById('login-overlay').style.display = 'none';
+}
+
+async function doLogin() {
+  const pwd = document.getElementById('login-pwd').value;
+  const errEl = document.getElementById('login-err');
+  errEl.style.display = 'none';
+  try {
+    const r = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({password: pwd}),
+    });
+    if (r.ok) {
+      const { token } = await r.json();
+      if (token) localStorage.setItem(_TM_KEY, token);
+      _hideLogin();
+      _mountApp();
+    } else {
+      errEl.textContent = '密码错误，请重试';
+      errEl.style.display = '';
+      document.getElementById('login-pwd').select();
+    }
+  } catch (e) {
+    errEl.textContent = '网络错误，请检查服务是否运行';
+    errEl.style.display = '';
+  }
+}
+
+function authFetch(url, opts = {}) {
+  const token = localStorage.getItem(_TM_KEY) || '';
+  const headers = Object.assign({}, opts.headers || {}, {'Authorization': 'Bearer ' + token});
+  return fetch(url, Object.assign({}, opts, {headers})).then(r => {
+    if (r.status === 401) { _showLogin(); return Promise.reject('unauthorized'); }
+    return r;
+  });
+}
+
+let _appMounted = false;
+function _mountApp() {
+  if (_appMounted) return;
+  _appMounted = true;
+  // 由下方 Babel 脚本注册，此处调用
+  if (typeof _doMountReact === 'function') _doMountReact();
+}
+
+async function _initAuth() {
+  const token = localStorage.getItem(_TM_KEY);
+  if (token) {
+    const r = await authFetch('/api/auth/check', {headers: {'Authorization': 'Bearer ' + token}}).catch(() => null);
+    if (r && r.ok) { _mountApp(); return; }
+  }
+  // 未配置密码的情况下 check 也会通过（中间件直接放行）
+  const probe = await authFetch('/api/auth/check').catch(() => null);
+  if (probe && probe.ok) { _mountApp(); return; }
+  _showLogin();
+}
+_initAuth();
+</script>
+
 <div id="root"></div>
 <script type="text/babel">
 
@@ -161,7 +247,7 @@ function App() {
   const reposLoadedRef = React.useRef(false);
 
   const refreshRepos = () =>
-    fetch('/api/repos').then(r => r.json()).then(data => {
+    authFetch('/api/repos').then(r => r.json()).then(data => {
       if (Array.isArray(data)) setRepoList(data);
       return data;
     }).catch(() => repoList);
@@ -170,10 +256,10 @@ function App() {
   const handleConfigRepo = async (targetRepo) => {
     setPickingFolder(targetRepo);
     try {
-      const pickRes = await fetch('/api/pick-folder');
+      const pickRes = await authFetch('/api/pick-folder');
       const pickData = await pickRes.json();
       if (!pickData.path) return; // 用户取消
-      await fetch('/api/set-repo-path', {
+      await authFetch('/api/set-repo-path', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({repo: targetRepo, path: pickData.path}),
@@ -262,7 +348,7 @@ function App() {
     const currentFile = files.find(f => f.id === selectedFile);
     if (!currentFile) return;
     const content = editedContent[selectedFile] ?? currentFile.enContent;
-    await fetch('/api/save', {
+    await authFetch('/api/save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ file_path: currentFile.enPath, content, repo, root: effectiveRoot }),
@@ -303,7 +389,7 @@ function App() {
     const id = currentChange.id;
     setSuggestingIds(p => new Set([...p, id]));
     try {
-      const r = await fetch('/api/translate', {
+      const r = await authFetch('/api/translate', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({zh_text: currentChange.chineseAfter})
@@ -1132,7 +1218,9 @@ function App() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+function _doMountReact() {
+  ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+}
 </script>
 </body>
 </html>
