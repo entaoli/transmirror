@@ -216,6 +216,21 @@
     background: var(--border);
     transition: background 0.2s;
   }
+
+  @media (max-width: 640px) {
+    .hflow-track {
+      overflow-x: visible;
+      flex-wrap: wrap;
+      gap: 16px 0;
+      padding-bottom: 0;
+    }
+    .hflow-step {
+      flex: 0 0 25%;
+      min-width: 0;
+    }
+    .hflow-step:not(:last-child)::after { display: none; }
+    .hflow-label { white-space: normal; font-size: 11px; padding: 0 4px; }
+  }
   .hflow-num {
     width: 36px; height: 36px;
     border-radius: 50%;
