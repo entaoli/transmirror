@@ -581,7 +581,7 @@
 
   <p class="hero-sub" style="max-width:760px;">
     面向 Docusaurus / Gitbook 文档的「AI 驱动 + 人机协同」本地化工作流。
-    深度集成 Git 与 HAP，基于 Git diff 自动追踪中文变更、
+    深度集成 Git 与 HAP，基于 Git diff 自动追踪中文变更、术语动态锁定、
     生成 AI 建议译文并推送审校队列，让多语言文档持续保持同步。
   </p>
 
@@ -661,9 +661,9 @@
     <div class="cards">
 
       <div class="card green">
-        <div class="card-header"><div class="card-icon">⚡</div><h3>预译</h3></div>
+        <div class="card-header"><div class="card-icon">⚡</div><h3>自动预译</h3></div>
         <div class="card-filename">hap_sync.py</div>
-        <p>中文文档每次 git commit 后由 post-commit hook 自动触发，提取变更章节，推送到 HAP 工作表。HAP 工作流负责 AI 翻译为英文，写回 AI 译文字段。</p>
+        <p>中文作者每次 git commit 后自动触发。基于 Git Diff 提取变更章节，完成术语处理并推送至 HAP 工作流，由 AI 自动生成建议译文。</p>
         <div class="tags">
           <span class="tag green">自动触发</span>
           <span class="tag green">增量推送</span>
@@ -672,9 +672,9 @@
       </div>
 
       <div class="card purple">
-        <div class="card-header"><div class="card-icon">✍</div><h3>英文审校</h3></div>
+        <div class="card-header"><div class="card-icon">✍</div><h3>审校平台</h3></div>
         <div class="card-filename">server.py + review.html</div>
-        <p>Web 审校平台。译员查看中文变更内容、AI 建议译文，在右侧编辑器修改后保存到英文文件。支持 HAP 工作表模式和 Git Commit 模式。</p>
+        <p>面向译员的轻量级 Web 工作台。左侧展示中文变更、使用术语、AI 译文，右侧进行编辑与保存。</p>
         <div class="tags">
           <span class="tag purple">常驻服务</span>
           <span class="tag purple">HAP 模式</span>
@@ -683,9 +683,9 @@
       </div>
 
             <div class="card blue">
-        <div class="card-header"><div class="card-icon">🗂</div><h3>批译</h3></div>
+        <div class="card-header"><div class="card-icon">🗂</div><h3>批量初始化</h3></div>
         <div class="card-filename">batch.py · localhost:8502/batch</div>
-        <p>一次性批量翻译整个目录的 md 文件。用于新语言的冷启动或大批量补全。支持目录选择、文件勾选、实时进度。支持三个目标语言：英文、繁體中文、日語。</p>
+        <p>用于新语言的冷启动或大批量补全。支持目录选择、文件勾选、实时进度。支持三个目标语言：英文、繁體中文、日語。</p>
         <div class="tags">
           <span class="tag blue">手动触发</span>
           <span class="tag blue">全量翻译</span>
@@ -744,8 +744,7 @@
           <div class="flow-body">
             <h4>术语扫描注入 <span style="font-size:12px;font-weight:400;color:var(--muted);margin-left:6px;">scan_terms()</span></h4>
             <p>
-              AI 翻译前，扫描全文比对 <strong style="color:var(--text);">18,000+</strong> 条术语库，自动识别文档中出现的专有名词，命中词条<code>动态注入</code>翻译提示词。
-              扫描到的动词、形容词、虚词、泛词等进行智能过滤，由 AI 自由发挥，保证句子流畅自然。
+              AI 翻译前，自动识别文档中的产品术语，按需生成上下文约束。动词、形容词、虚词、泛词等进行智能过滤，由 AI 自由发挥，保证句子流畅自然。
             </p>
             <div class="tags" style="margin-top:12px;">
               <span class="tag green">自定义页面 → Custom Page</span>
@@ -826,7 +825,7 @@
         </div>
         <div class="hflow-step" data-step="4">
           <div class="hflow-num">5</div>
-          <div class="hflow-label">查看对比和术语</div>
+          <div class="hflow-label">审校译文</div>
         </div>
         <div class="hflow-step" data-step="5">
           <div class="hflow-num">6</div>
@@ -844,7 +843,7 @@
         <div class="hflow-panel active" data-step="0">
           <div class="hflow-panel-img">
             <div class="hflow-slides">
-              <div class="hflow-slide active"><img src="./trans01.png" alt="提交变更 · 图1"></div>
+              <div class="hflow-slide active"><img src="./img/trans01.png" alt="提交变更 · 图1"></div>
             </div>
             <button class="hflow-prev">&#8249;</button>
             <button class="hflow-next">&#8250;</button>
@@ -859,9 +858,9 @@
         <div class="hflow-panel" data-step="1">
           <div class="hflow-panel-img">
             <div class="hflow-slides">
-              <div class="hflow-slide active"><img src="./trans02.png" alt="自动预译 · 图1"></div>
+              <div class="hflow-slide active"><img src="./img/trans02.png" alt="自动预译 · 图1"></div>
 
-              <div class="hflow-slide active"><img src="./trans03.png" alt="自动预译 · 图2"></div>
+              <div class="hflow-slide active"><img src="./img/trans03.png" alt="自动预译 · 图2"></div>
             </div>
             <button class="hflow-prev">&#8249;</button>
             <button class="hflow-next">&#8250;</button>
@@ -877,7 +876,7 @@
         <div class="hflow-panel" data-step="2">
           <div class="hflow-panel-img">
             <div class="hflow-slides">
-              <div class="hflow-slide active"><img src="./trans04.png" alt="AI 建议译文 · 图1"></div>
+              <div class="hflow-slide active"><img src="./img/trans04.png" alt="AI 建议译文 · 图1"></div>
             </div>
             <button class="hflow-prev">&#8249;</button>
             <button class="hflow-next">&#8250;</button>
@@ -892,7 +891,7 @@
         <div class="hflow-panel" data-step="3">
           <div class="hflow-panel-img">
             <div class="hflow-slides">
-              <div class="hflow-slide active"><img src="./001.gif" alt="打开译境 · 图1"></div>
+              <div class="hflow-slide active"><img src="./img/001.gif" alt="打开译境 · 图1"></div>
             </div>
             <button class="hflow-prev">&#8249;</button>
             <button class="hflow-next">&#8250;</button>
@@ -907,22 +906,22 @@
         <div class="hflow-panel" data-step="4">
           <div class="hflow-panel-img">
             <div class="hflow-slides">
-              <div class="hflow-slide active"><img src="./002.gif" alt="查看变更 · 图1"></div>
+              <div class="hflow-slide active"><img src="./img/002.gif" alt="查看变更 · 图1"></div>
             </div>
             <button class="hflow-prev">&#8249;</button>
             <button class="hflow-next">&#8250;</button>
             <div class="hflow-dots"></div>
           </div>
           <div class="hflow-panel-desc">
-            <h4>查看变更内容 · 术语词条 · 建议译文</h4>
-            <p> </p>
+            <h4>审校译文</h4>
+            <p> 查看本次中文变更内容与命中的术语词条，对照 AI 建议译文进行确认和调整。译境自动提供上下文与术语决策依据，帮助译员快速完成审校。</p>
           </div>
         </div>
 
         <div class="hflow-panel" data-step="5">
           <div class="hflow-panel-img">
             <div class="hflow-slides">
-              <div class="hflow-slide active"><img src="./004.gif" alt="编辑保存 · 图1"></div>
+              <div class="hflow-slide active"><img src="./img/004.gif" alt="编辑保存 · 图1"></div>
             </div>
             <button class="hflow-prev">&#8249;</button>
             <button class="hflow-next">&#8250;</button>
@@ -937,7 +936,7 @@
         <div class="hflow-panel" data-step="6">
           <div class="hflow-panel-img">
             <div class="hflow-slides">
-              <div class="hflow-slide active"><img src="./trans07.png" alt="提交英文 · 图1"></div>
+              <div class="hflow-slide active"><img src="./img/trans07.png" alt="提交英文 · 图1"></div>
             </div>
             <button class="hflow-prev">&#8249;</button>
             <button class="hflow-next">&#8250;</button>
@@ -1013,14 +1012,25 @@
 
         <div class="flow-step">
           <div class="flow-num">4</div>
-          <div class="flow-body" style="padding-bottom:0;">
-            <h4>重启服务，打开译境</h4>
-            <p>修改 .env 后需重启服务，然后在浏览器打开译境。</p>
+          <div class="flow-body">
+            <h4>重启服务</h4>
+            <p>修改 .env 后需重启服务使配置生效。</p>
             <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;">
               <code>launchctl unload ~/Library/LaunchAgents/com.transmirror.server.plist</code>
               <code>launchctl load ~/Library/LaunchAgents/com.transmirror.server.plist</code>
             </div>
-            <p style="margin-top:10px;">浏览器访问 <strong style="color:var(--accent)">http://localhost:8502</strong> 进入审校界面，<strong style="color:var(--accent)">http://localhost:8502/batch</strong> 进入批译界面。</p>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="flow-num">5</div>
+          <div class="flow-body" style="padding-bottom:0;">
+            <h4>快速访问</h4>
+            <p>服务启动后，浏览器直接点击进入对应界面。</p>
+            <div class="tags" style="margin-top:12px;">
+              <a href="http://localhost:8502" target="_blank" class="tag blue" style="text-decoration:none;font-family:monospace;font-size:13px;">localhost:8502 &nbsp;·&nbsp; 审校界面</a>
+              <a href="http://localhost:8502/batch" target="_blank" class="tag green" style="text-decoration:none;font-family:monospace;font-size:13px;">localhost:8502/batch &nbsp;·&nbsp; 批量翻译</a>
+            </div>
           </div>
         </div>
 
