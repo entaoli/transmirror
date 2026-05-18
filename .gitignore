@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.env
+server.log
+hap_sync.log
+*.md
+*.py
+*.json
+*.sh
+*.log
+*.csv
+node_modules/
+.claude/
+.DS_Store

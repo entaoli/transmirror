@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HAP· 译境 - 批量翻译</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #f8f8f9;
+  color: #333;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  height: 52px;
+  background: #fff;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 14px;
+  flex-shrink: 0;
+}
+.topbar-logo {
+  width: 26px; height: 26px;
+  border-radius: 6px;
+  background: oklch(0.62 0.2 240);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px; font-weight: 500;
+  color: white;
+  flex-shrink: 0;
+  letter-spacing: -0.5px;
+}
+.topbar-title { font-size: 14px; font-weight: 600; color: #333; }
+.topbar-sep { color: #e0e0e0; font-size: 16px; }
+.topbar-sub { font-size: 13px; color: #757575; }
+.topbar-link {
+  margin-left: auto;
+  font-size: 12px;
+  color: #9e9e9e;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+  transition: color 0.15s, border-color 0.15s;
+}
+.topbar-link:hover { color: #333; border-color: oklch(0.62 0.2 240 / 0.4); }
+
+.main {
+  flex: 1;
+  display: flex;
+  gap: 0;
+  overflow: hidden;
+}
+
+/* ── 左侧配置面板 ── */
+.config-panel {
+  width: 260px;
+  min-width: 260px;
+  background: #0B1F19;
+  border-right: 1px solid rgba(255,255,255,0.06);
+  padding: 20px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+}
+
+.section-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.28);
+  margin-bottom: 8px;
+}
+
+/* 项目选择 */
+.repo-group { display: flex; flex-direction: column; gap: 2px; }
+.repo-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12.5px;
+  color: rgba(255,255,255,0.55);
+  border: 1px solid transparent;
+  transition: all 0.12s;
+}
+.repo-item:hover { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.8); }
+.repo-item.active {
+  background: oklch(0.62 0.2 240 / 0.12);
+  border-color: oklch(0.62 0.2 240 / 0.25);
+  color: rgba(255,255,255,0.9);
+}
+.repo-dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,0.25);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.repo-item.active .repo-dot { border-color: oklch(0.62 0.2 240); }
+.repo-dot-inner {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: oklch(0.62 0.2 240);
+  display: none;
+}
+.repo-item.active .repo-dot-inner { display: block; }
+
+/* 目录选择 */
+.dir-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.dir-input {
+  flex: 1;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 7px;
+  padding: 7px 10px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.75);
+  font-family: 'IBM Plex Mono', monospace;
+  outline: none;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dir-input:focus { border-color: oklch(0.62 0.2 240 / 0.5); }
+.btn-pick {
+  padding: 0 10px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 7px;
+  color: rgba(255,255,255,0.6);
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.12s;
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+.btn-pick:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.9); }
+
+.output-path {
+  margin-top: 6px;
+  font-size: 11px;
+  color: rgba(255,255,255,0.28);
+  font-family: 'IBM Plex Mono', monospace;
+  word-break: break-all;
+  line-height: 1.5;
+}
+.output-path span { color: oklch(0.72 0.17 160); }
+
+/* 文件列表 */
+.file-list-wrap {
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  overflow: hidden;
+  max-height: 280px;
+  display: flex;
+  flex-direction: column;
+}
+.file-list-header {
+  padding: 8px 12px;
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  font-size: 11px;
+  color: rgba(255,255,255,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.file-list-inner {
+  overflow-y: auto;
+  flex: 1;
+}
+.file-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  font-size: 12.5px;
+  color: rgba(255,255,255,0.6);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.file-row:last-child { border-bottom: none; }
+.file-row:hover { background: rgba(255,255,255,0.03); }
+.file-row.checked { color: rgba(255,255,255,0.85); }
+.file-checkbox {
+  width: 14px; height: 14px;
+  border: 1.5px solid rgba(255,255,255,0.2);
+  border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.12s;
+}
+.file-row.checked .file-checkbox {
+  background: oklch(0.62 0.2 240);
+  border-color: oklch(0.62 0.2 240);
+}
+.file-checkbox svg { display: none; }
+.file-row.checked .file-checkbox svg { display: block; }
+.file-empty {
+  padding: 24px 12px;
+  text-align: center;
+  font-size: 12px;
+  color: rgba(255,255,255,0.2);
+}
+.select-all-btn {
+  background: none;
+  border: none;
+  color: oklch(0.62 0.2 240);
+  font-size: 11px;
+  cursor: pointer;
+  padding: 0;
+}
+.select-all-btn:hover { text-decoration: underline; }
+
+/* 干运行开关 */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0;
+}
+.toggle-label { font-size: 13px; color: rgba(255,255,255,0.6); }
+.toggle-desc { font-size: 11px; color: rgba(255,255,255,0.3); margin-top: 2px; }
+.toggle {
+  width: 36px; height: 20px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.12);
+  cursor: pointer;
+  position: relative;
+  transition: background 0.2s, border-color 0.2s;
+  flex-shrink: 0;
+}
+.toggle.on { background: oklch(0.62 0.2 240); border-color: oklch(0.62 0.2 240); }
+.toggle-knob {
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: white;
+  transition: left 0.2s;
+}
+.toggle.on .toggle-knob { left: 18px; }
+
+/* 开始按钮 */
+.btn-start {
+  width: 100%;
+  padding: 10px;
+  background: oklch(0.62 0.2 240);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s, background 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-start:hover:not(:disabled) { background: oklch(0.67 0.2 240); }
+.btn-start:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-start.running { background: oklch(0.55 0.14 25); }
+.btn-start.running:hover:not(:disabled) { background: oklch(0.58 0.14 25); }
+
+/* ── 右侧日志面板 ── */
+.log-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #f8f8f9;
+}
+.log-header {
+  padding: 14px 20px 12px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.log-title { font-size: 13px; font-weight: 500; color: #333; }
+
+/* 进度条 */
+.progress-wrap {
+  padding: 12px 20px 14px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #fff;
+  flex-shrink: 0;
+}
+.progress-track {
+  height: 4px;
+  background: rgba(0,0,0,0.06);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2196f3, #42a5f5);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+.progress-text {
+  font-size: 11px;
+  color: #757575;
+  margin-top: 6px;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* 日志条目 */
+.log-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: 'IBM Plex Mono', "SF Mono", monospace;
+  font-size: 12.5px;
+}
+.log-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 5px 8px;
+  border-radius: 5px;
+  line-height: 1.5;
+  color: #555;
+}
+.log-entry.start { color: #757575; }
+.log-entry.file_start { color: #757575; }
+.log-entry.file_done { background: rgba(76,175,80,0.08); color: #2e7d32; }
+.log-entry.file_error { background: rgba(244,67,54,0.08); color: #c62828; }
+.log-entry.error { background: rgba(244,67,54,0.08); color: #c62828; }
+.log-entry.done { background: rgba(33,150,243,0.08); color: #1565c0; border: 1px solid rgba(33,150,243,0.18); }
+.log-icon { flex-shrink: 0; width: 16px; text-align: center; }
+.log-file { font-weight: 500; color: #333; }
+.log-msg { color: #757575; font-size: 11.5px; }
+
+.log-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #bdbdbd;
+  gap: 10px;
+}
+.log-empty-icon { font-size: 32px; opacity: 0.5; }
+.log-empty-text { font-size: 13px; }
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="topbar-logo">HAP</span>
+  <span class="topbar-title">译境</span>
+  <span class="topbar-sep">|</span>
+  <span class="topbar-sub">批量翻译 Markdown 文档</span>
+  <a href="/" class="topbar-link">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M6 12l4-4-4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    返回首页
+  </a>
+</div>
+
+<div class="main">
+  <!-- 左侧配置 -->
+  <div class="config-panel">
+
+    <!-- 项目 -->
+    <div>
+      <div class="section-label">项目</div>
+      <div class="repo-group" id="repoGroup"></div>
+    </div>
+
+    <!-- 目标语言 -->
+    <div>
+      <div class="section-label">目标语言</div>
+      <div class="repo-group" id="langGroup"></div>
+    </div>
+
+    <!-- 源目录 -->
+    <div>
+      <div class="section-label" id="inputDirLabel">源目录（中文 docs）</div>
+      <div class="dir-row">
+        <input class="dir-input" id="inputDir" placeholder="选择或输入项目目录…" spellcheck="false">
+        <button class="btn-pick" id="btnClearDir" title="清除" style="display:none;padding:0 10px;opacity:0.5;">✕</button>
+        <button class="btn-pick" id="btnPick">选择</button>
+      </div>
+      <div class="output-path" id="srcPath" style="display:none"></div>
+      <div class="output-path" id="outputPath" style="display:none">
+        输出 → <span id="outputPathText"></span>
+      </div>
+    </div>
+
+    <!-- 文件列表 -->
+    <div>
+      <div class="section-label">文件列表</div>
+      <div class="file-list-wrap">
+        <div class="file-list-header">
+          <span id="fileCount">尚未选择目录</span>
+          <button class="select-all-btn" id="btnSelectAll" style="display:none" onclick="toggleSelectAll()">全选</button>
+        </div>
+        <div class="file-list-inner" id="fileListInner">
+          <div class="file-empty">选择目录后自动加载文件</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 干运行 -->
+    <div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">预览模式</div>
+          <div class="toggle-desc">不写入文件，仅输出翻译结果</div>
+        </div>
+        <div class="toggle" id="dryRunToggle" onclick="toggleDryRun()">
+          <div class="toggle-knob"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 开始按钮 -->
+    <button class="btn-start" id="btnStart" disabled onclick="handleStart()">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M5 3l9 5-9 5V3z" fill="currentColor"/></svg>
+      开始批译
+    </button>
+
+  </div>
+
+  <!-- 右侧日志 -->
+  <div class="log-panel">
+    <div class="log-header">
+      <span class="log-title">翻译进度</span>
+      <span id="logStatus" style="font-size:11px;color:#9e9e9e;">等待开始</span>
+    </div>
+    <div class="progress-wrap" id="progressWrap" style="display:none">
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill" style="width:0%"></div>
+      </div>
+      <div class="progress-text">
+        <span id="progressLabel">0 / 0</span>
+        <span id="progressPct">0%</span>
+      </div>
+    </div>
+    <div class="log-body" id="logBody">
+      <div class="log-empty">
+        <div class="log-empty-icon">📄</div>
+        <div class="log-empty-text">选择目录并点击开始批译</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── 状态 ────────────────────────────────────────────────────
+let repo = 'help';
+let repoList = [];
+let lang = 'en';
+const LANGS = [
+  { id: 'en',    label: 'English',          src: '简体中文' },
+  { id: 'ja',    label: '日本語',            src: 'English' },
+  { id: 'zh-TW', label: '繁體中文',          src: 'English' },
+];
+let allFiles = [];
+let selectedFiles = new Set();
+let outputDir = '';
+let dryRun = false;
+let running = false;
+let evtSource = null;
+
+const DIR_KEY  = 'batch_input_dir';
+const REPO_KEY = 'batch_repo';
+const LANG_KEY = 'batch_lang';
+
+function _setInputDir(dir) {
+  const el = document.getElementById('inputDir');
+  el.value = dir;
+  document.getElementById('btnClearDir').style.display = dir ? '' : 'none';
+}
+
+// ── 初始化 ──────────────────────────────────────────────────
+async function init() {
+  const r = await fetch('/api/repos');
+  repoList = await r.json();
+
+  // 恢复上次选择
+  const savedRepo = localStorage.getItem(REPO_KEY);
+  if (savedRepo && repoList.find(r => r.id === savedRepo)) repo = savedRepo;
+  const savedLang = localStorage.getItem(LANG_KEY);
+  if (savedLang && LANGS.find(l => l.id === savedLang)) lang = savedLang;
+  renderRepos();
+  renderLangs();
+  // 同步 inputDir 标签
+  const cfg = LANGS.find(l => l.id === lang);
+  document.getElementById('inputDirLabel').textContent = lang === 'en'
+    ? '源目录（中文 docs）'
+    : `源目录（实际读取对应 ${cfg ? cfg.src : 'English'} 目录）`;
+
+  const saved = localStorage.getItem(DIR_KEY);
+  if (saved) {
+    _setInputDir(saved);
+    await loadFiles(saved);
+  }
+}
+
+function renderRepos() {
+  const el = document.getElementById('repoGroup');
+  el.innerHTML = repoList.map(r => `
+    <div class="repo-item ${r.id === repo ? 'active' : ''}" onclick="setRepo('${r.id}')">
+      <div class="repo-dot"><div class="repo-dot-inner"></div></div>
+      <span>${r.label}</span>
+    </div>
+  `).join('');
+}
+
+function renderLangs() {
+  const el = document.getElementById('langGroup');
+  el.innerHTML = LANGS.map(l => `
+    <div class="repo-item ${l.id === lang ? 'active' : ''}" onclick="setLang('${l.id}')">
+      <div class="repo-dot"><div class="repo-dot-inner"></div></div>
+      <span>${l.label}</span>
+    </div>
+  `).join('');
+}
+
+function setRepo(id) {
+  repo = id;
+  localStorage.setItem(REPO_KEY, id);
+  renderRepos();
+  resetDir();
+}
+
+function setLang(id) {
+  lang = id;
+  localStorage.setItem(LANG_KEY, id);
+  renderLangs();
+  const cfg = LANGS.find(l => l.id === id);
+  const label = lang === 'en'
+    ? '源目录（中文 docs）'
+    : `源目录（实际读取对应 ${cfg ? cfg.src : 'English'} 目录）`;
+  document.getElementById('inputDirLabel').textContent = label;
+  // 重新推导输出路径
+  const dir = document.getElementById('inputDir').value;
+  if (dir) loadFiles(dir);
+}
+
+// ── 目录选择 ────────────────────────────────────────────────
+document.getElementById('btnPick').onclick = async () => {
+  const r = await fetch('/api/pick-folder');
+  const d = await r.json();
+  if (!d.path) return;
+  _setInputDir(d.path);
+  await loadFiles(d.path);
+};
+
+document.getElementById('btnClearDir').onclick = () => resetDir();
+
+document.getElementById('inputDir').addEventListener('keydown', async (e) => {
+  if (e.key === 'Enter') {
+    const dir = e.target.value.trim();
+    if (dir) { _setInputDir(dir); await loadFiles(dir); }
+  }
+});
+
+document.getElementById('inputDir').addEventListener('input', (e) => {
+  document.getElementById('btnClearDir').style.display = e.target.value ? '' : 'none';
+});
+
+async function loadFiles(dir) {
+  const r = await fetch(`/api/batch-files?input_dir=${encodeURIComponent(dir)}&repo=${repo}&lang=${lang}`);
+  const d = await r.json();
+  if (d.error) { alert(d.error); return; }
+  allFiles = d.files || [];
+  outputDir = d.output_dir || '';
+  selectedFiles = new Set(allFiles);
+  localStorage.setItem(DIR_KEY, dir);
+  _setInputDir(dir);
+  renderFileList();
+  const srcEl = document.getElementById('srcPath');
+  if (lang !== 'en' && d.src_dir) {
+    srcEl.textContent = '源文件：' + d.src_dir;
+    srcEl.style.display = 'block';
+  } else {
+    srcEl.style.display = 'none';
+  }
+  if (outputDir) {
+    document.getElementById('outputPath').style.display = 'block';
+    document.getElementById('outputPathText').textContent = outputDir;
+  }
+  updateStartBtn();
+}
+
+function resetDir() {
+  _setInputDir('');
+  localStorage.removeItem(DIR_KEY);
+  document.getElementById('outputPath').style.display = 'none';
+  document.getElementById('srcPath').style.display = 'none';
+  allFiles = [];
+  selectedFiles = new Set();
+  renderFileList();
+  updateStartBtn();
+}
+
+// ── 文件列表 ────────────────────────────────────────────────
+function renderFileList() {
+  const inner = document.getElementById('fileListInner');
+  const count = document.getElementById('fileCount');
+  const btnAll = document.getElementById('btnSelectAll');
+
+  if (allFiles.length === 0) {
+    inner.innerHTML = '<div class="file-empty">未找到 .md 文件</div>';
+    count.textContent = '无文件';
+    btnAll.style.display = 'none';
+    return;
+  }
+
+  count.textContent = `${selectedFiles.size} / ${allFiles.length} 个已选`;
+  btnAll.style.display = 'inline';
+  btnAll.textContent = selectedFiles.size === allFiles.length ? '取消全选' : '全选';
+
+  inner.innerHTML = allFiles.map(f => `
+    <div class="file-row ${selectedFiles.has(f) ? 'checked' : ''}" onclick="toggleFile('${f}')">
+      <div class="file-checkbox">
+        <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
+          <path d="M1 3.5l2.5 2.5L8 1" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <span>${f}</span>
+    </div>
+  `).join('');
+}
+
+function toggleFile(name) {
+  if (running) return;
+  if (selectedFiles.has(name)) selectedFiles.delete(name);
+  else selectedFiles.add(name);
+  renderFileList();
+  updateStartBtn();
+}
+
+function toggleSelectAll() {
+  if (running) return;
+  if (selectedFiles.size === allFiles.length) selectedFiles.clear();
+  else selectedFiles = new Set(allFiles);
+  renderFileList();
+  updateStartBtn();
+}
+
+// ── 开关 ────────────────────────────────────────────────────
+function toggleDryRun() {
+  if (running) return;
+  dryRun = !dryRun;
+  document.getElementById('dryRunToggle').classList.toggle('on', dryRun);
+}
+
+function updateStartBtn() {
+  const btn = document.getElementById('btnStart');
+  btn.disabled = running || selectedFiles.size === 0 || !document.getElementById('inputDir').value;
+}
+
+// ── 开始批译 ────────────────────────────────────────────────
+function handleStart() {
+  if (running) { stopBatch(); return; }
+  startBatch();
+}
+
+function startBatch() {
+  running = true;
+  const btn = document.getElementById('btnStart');
+  btn.classList.add('running');
+  btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="2" y="2" width="3" height="8" rx="1" fill="currentColor"/><rect x="7" y="2" width="3" height="8" rx="1" fill="currentColor"/></svg> 停止`;
+  btn.disabled = false;
+
+  document.getElementById('logBody').innerHTML = '';
+  document.getElementById('progressWrap').style.display = 'block';
+  setProgress(0, 0);
+  document.getElementById('logStatus').textContent = '翻译中…';
+
+  const params = new URLSearchParams({
+    input_dir: document.getElementById('inputDir').value,
+    files: [...selectedFiles].join(','),
+    dry_run: dryRun ? 'true' : 'false',
+    repo,
+    lang,
+  });
+
+  evtSource = new EventSource(`/api/batch-translate?${params}`);
+  evtSource.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    handleEvent(msg);
+  };
+  evtSource.onerror = () => {
+    appendLog({ type: 'error', message: '连接中断' });
+    stopBatch();
+  };
+}
+
+function stopBatch() {
+  running = false;
+  if (evtSource) { evtSource.close(); evtSource = null; }
+  const btn = document.getElementById('btnStart');
+  btn.classList.remove('running');
+  btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M5 3l9 5-9 5V3z" fill="currentColor"/></svg> 开始批译`;
+  updateStartBtn();
+  document.getElementById('logStatus').textContent = '已停止';
+}
+
+let _total = 0;
+let _currentFileText = '';
+function handleEvent(msg) {
+  switch (msg.type) {
+    case 'start':
+      _total = msg.total;
+      setProgress(0, msg.total);
+      appendLog({ type: 'start', icon: '📂', text: `共 ${msg.total} 个文件，输出到 ${msg.output_dir}` });
+      break;
+    case 'file_start':
+      _currentFileText = `[${msg.current}/${msg.total}] ${msg.file}`;
+      document.getElementById('logStatus').textContent = _currentFileText;
+      appendLog({ type: 'file_start', icon: '⏳', text: _currentFileText, sub: '准备中…' });
+      break;
+    case 'step': {
+      const stepLabel = { ai1: 'AI 一轮翻译中…', ai2: 'AI 二轮润色中…' }[msg.step] || '处理中…';
+      document.getElementById('logStatus').textContent = stepLabel.replace('中…', '');
+      replaceLastLog({ type: 'file_start', icon: '⏳', text: _currentFileText, sub: stepLabel, keepLast: true });
+      break;
+    }
+    case 'file_done':
+      setProgress(msg.current, msg.total);
+      replaceLastLog({ type: 'file_done', icon: '✅', text: `[${msg.current}/${msg.total}] ${msg.file}`, sub: dryRun ? '预览完成' : '已写入' });
+      break;
+    case 'file_error':
+      setProgress(msg.current, msg.total);
+      replaceLastLog({ type: 'file_error', icon: '❌', text: `[${msg.current}/${msg.total}] ${msg.file}`, sub: msg.message });
+      break;
+    case 'done':
+      appendLog({
+        type: 'done', icon: '🎉',
+        text: `完成：${msg.success} 个成功${msg.failed.length ? `，${msg.failed.length} 个失败（${msg.failed.join('、')}）` : ''}`,
+        sub: dryRun ? '预览模式，未写入文件' : `输出目录：${msg.output_dir}`
+      });
+      document.getElementById('logStatus').textContent = `完成 ${msg.success}/${_total}`;
+      evtSource && evtSource.close();
+      stopBatch();
+      break;
+    case 'error':
+      appendLog({ type: 'error', icon: '❌', text: msg.message });
+      stopBatch();
+      break;
+  }
+}
+
+function setProgress(current, total) {
+  const pct = total ? Math.round(current / total * 100) : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = `${current} / ${total}`;
+  document.getElementById('progressPct').textContent = pct + '%';
+}
+
+function appendLog({ type, icon, text, sub }) {
+  const body = document.getElementById('logBody');
+  const el = document.createElement('div');
+  el.className = `log-entry ${type}`;
+  el.dataset.last = 'true';
+  el.innerHTML = `
+    <span class="log-icon">${icon || ''}</span>
+    <span>
+      <span class="log-file">${text}</span>
+      ${sub ? `<br><span class="log-msg">${sub}</span>` : ''}
+    </span>
+  `;
+  body.appendChild(el);
+  body.scrollTop = body.scrollHeight;
+}
+
+function replaceLastLog({ type, icon, text, sub, keepLast = false }) {
+  const body = document.getElementById('logBody');
+  const all = body.querySelectorAll('[data-last="true"]');
+  const last = all[all.length - 1] || null;
+  if (last) {
+    last.className = `log-entry ${type}`;
+    last.innerHTML = `
+      <span class="log-icon">${icon || ''}</span>
+      <span>
+        <span class="log-file">${text}</span>
+        ${sub ? `<br><span class="log-msg">${sub}</span>` : ''}
+      </span>
+    `;
+    if (!keepLast) last.dataset.last = '';
+  } else {
+    appendLog({ type, icon, text, sub });
+  }
+}
+
+init();
+</script>
+</body>
+</html>
