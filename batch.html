@@ -610,7 +610,7 @@ document.getElementById('inputDir').addEventListener('input', (e) => {
 });
 
 async function loadFiles(dir) {
-  const r = await fetch(`/api/batch-files?input_dir=${encodeURIComponent(dir)}&repo=${repo}&lang=${lang}`);
+  const r = await authFetch(`/api/batch-files?input_dir=${encodeURIComponent(dir)}&repo=${repo}&lang=${lang}`);
   const d = await r.json();
   if (d.error) { alert(d.error); return; }
   allFiles = d.files || [];
